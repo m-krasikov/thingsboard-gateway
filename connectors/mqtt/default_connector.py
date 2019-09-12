@@ -4,11 +4,11 @@ import threading
 import time
 
 try:
-    from gateway.tb_device_mqtt import TBDeviceMqttClient
+    from tb_client.tb_device_mqtt import TBDeviceMqttClient
 except ModuleNotFoundError:
     import sys
     sys.path.append('/home/zenx/Documents/ThingsBoard/main_TB_gateway/ThingsBoard-Gateway')
-    from gateway.tb_device_mqtt import TBDeviceMqttClient
+    from tb_client.tb_device_mqtt import TBDeviceMqttClient
 
 
 log = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class TBMqttDefaultConnector():
     def get_config(self, extension):
         log.info('Loading config for {} extension'.format(extension.get('name')))
         try:
-            with open('extensions/MQTT/'+extension.get('config'), 'r') as config_file:
+            with open('extensions/mqtt/'+extension.get('config'), 'r') as config_file:
                 self.devices_config = json.load(config_file)
                 log.debug('Config for {} loaded'.format(extension.get('name')))
 
@@ -89,8 +89,7 @@ class TBMqttDefaultConnector():
 
 if __name__ == '__main__':
     test_extension = {
-          "name": "Default_MQTT",
-          "type": "MQTT",
+          "type": "mqtt",
           "config": "default_mqtt.json",
           "enabled": True
         }

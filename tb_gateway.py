@@ -1,7 +1,8 @@
 import logging
 
-from gateway._tb_gateway_service import TB_Gateway
+from gateway._tb_gateway_service import TBGatewayService
 
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
-gateway = TB_Gateway()
+gateway = TBGatewayService("config/tb_gateway.json")
+

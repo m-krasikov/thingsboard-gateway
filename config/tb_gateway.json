@@ -1,5 +1,22 @@
 {
-  "host": "cloud.thingsboard.io",
-  "port": 1883,
-  "token": "FUH2Fonov6eajSHi0Zyw"
+  "thingsboard-client": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "security": {
+      "accessToken": "FUH2Fonov6eajSHi0Zyw"
+    }
+  },
+  "storage": {
+    "file": {
+      "data_folder_path": "./data",
+      "max_records_per_file": 1000,
+      "max_records_between_fsync": 1,
+      "max_file_count": 100,
+      "no_records_sleep_interval": 6000,
+      "max_read_records_count": 10
+    },
+    "memory": {
+
+    }
+  }
 }
