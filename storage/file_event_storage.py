@@ -2,14 +2,15 @@ from storage.event_storage import EventStorage
 from tb_utility.tb_utility import TBUtility
 import queue
 
-class MemoryEventStorage(EventStorage):
+
+class FileEventStorage(EventStorage):
     def __init__(self,config):
         self.__queue_len = TBUtility.get_parameter(config,"max_records_count",100)
         self.__events_per_time = TBUtility.get_parameter(config,"read_records_count",10)
         self.__events_queue = queue.Queue()
         self.__event_pack = []
 
-    def put(self,event):
+    def put(self, event):
         if not self.__events_queue.full():
             self.__events_queue.put(event)
             return True
@@ -24,3 +25,4 @@ class MemoryEventStorage(EventStorage):
 
     def event_pack_processing_done(self):
         self.__event_pack = []
+
