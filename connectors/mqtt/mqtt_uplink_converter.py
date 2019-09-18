@@ -1,4 +1,4 @@
-from abc import ABC,abstractmethod
+from abc import ABC, abstractmethod
 
 
 class MqttUplinkConverter(ABC):
@@ -20,5 +20,5 @@ class MqttUplinkConverter(ABC):
     #     }
     # }
     @abstractmethod
-    def convert(self, topic, body):
+    def convert(self, body):
         pass

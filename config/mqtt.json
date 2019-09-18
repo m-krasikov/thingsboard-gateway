@@ -35,6 +35,23 @@
       }
     },
     {
+      "topicFilter": "/temperature-sensors/+",
+      "converter": {
+        "type": "json",
+        "filterExpression": "",
+        "deviceNameJsonExpression": "${$.sensorId}",
+        "deviceTypeJsonExpression": "${$.sensorType}",
+        "timeout": 60000,
+        "timeseries": [
+          {
+            "type": "double",
+            "key": "humidity",
+            "value": "${$.humidity}"
+          }
+        ]
+      }
+    },
+    {
       "topicFilter": "/custom-sensors/+",
       "converter": {
         "type": "custom",

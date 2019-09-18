@@ -1,4 +1,4 @@
-from abc import ABC,abstractmethod
+from abc import ABC, abstractmethod
 
 
 class Connector(ABC):
@@ -11,3 +11,6 @@ class Connector(ABC):
     def close(self):
         pass
 
+    @abstractmethod
+    def get_name(self):
+        pass
