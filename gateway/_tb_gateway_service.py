@@ -11,27 +11,31 @@ from storage.memory_event_storage import MemoryEventStorage
 from storage.file_event_storage import FileEventStorage
 
 
-log = logging.getLogger(__name__)
-
+log = logging.getLogger('__main__')
+log.setLevel(logging.DEBUG)
 
 class TBGatewayService:
     def __init__(self, config_file):
         with open(config_file) as config:
             config = yaml.safe_load(config)
             self.available_connectors = {}
+            # TODO: Store connector that created this device.
             self.__connected_devices = {}
             self.__connector_incoming_messages = {}
-            self.__Send_Thread = Thread(target=self.__send_data_from_storage, daemon=True)
+            self.__send_thread = Thread(target=self.__read_data_from_storage, daemon=True)
             if config["storage"]["type"] == "memory":
                 self.__event_storage = MemoryEventStorage(config["storage"])
             else:
                 self.__event_storage = FileEventStorage(config["storage"])
+            self.__events = []
             self.tb_client = TBClient(config["thingsboard-client"])
             self.tb_client.connect()
-
+            self._devices_connectors = {}
+            # TODO:
+            # self.tb_client._client.subscribe_to_all_attributes(self.__attribute_update_callback)
             self.__load_connectors(config)
             self.__connect_with_connectors()
-            self.__Send_Thread.start()
+            self.__send_thread.start()
 
             while True:
                 time.sleep(.1)
@@ -75,20 +79,33 @@ class TBGatewayService:
         else:
             log.error('Data from connector "%s" cannot be saved.')
 
-    def __send_data_from_storage(self):
+    def __read_data_from_storage(self):
         while True:
-            events = self.__event_storage.get_event_pack()
-            if events:
-                for event in events:
-                    current_event = loads(event)
-                    if current_event["deviceName"] not in self.__connected_devices:
-                        self.tb_client._client.gw_connect_device(current_event["deviceName"]).wait_for_publish()
-                    self.__connected_devices[current_event["deviceName"]] = current_event["deviceName"]
-                    if current_event.get("telemetry"):
-                        data_to_send = loads('{"ts": %i,"values": %s}'%(time.time(), ','.join(dumps(param) for param in current_event["telemetry"])))
-                        self.tb_client._client.gw_send_telemetry(current_event["deviceName"], data_to_send)
-                    if current_event.get("attributes"):
-                        data_to_send = loads('%s'%( ','.join(dumps(param) for param in current_event["attributes"])))
-                        self.tb_client._client.gw_send_attributes(current_event["deviceName"], data_to_send)
-            self.__event_storage.event_pack_processing_done()
-            time.sleep(5)
+            try:
+                self.__published_events = []
+                events = self.__event_storage.get_event_pack()
+                if events:
+                    for event in events:
+                        current_event = loads(event)
+                        if current_event["deviceName"] not in self.__connected_devices:
+                            self.tb_client._client.gw_connect_device(current_event["deviceName"]).wait_for_publish()
+                        self.__connected_devices[current_event["deviceName"]]["current_event"] = current_event["deviceName"]
+                        if current_event.get("telemetry"):
+                            data_to_send = loads('{"ts": %i,"values": %s}'%(time.time(), ','.join(dumps(param) for param in current_event["telemetry"])))
+                            self.__published_events.append(self.tb_client._client.gw_send_telemetry(current_event["deviceName"], data_to_send))
+                        if current_event.get("attributes"):
+                            data_to_send = loads('%s'%( ','.join(dumps(param) for param in current_event["attributes"])))
+                            self.__published_events.append(self.tb_client._client.gw_send_attributes(current_event["deviceName"], data_to_send))
+                    success = True
+                    for event in range(len(self.__published_events)):
+                        result = self.__published_events[event].get()
+                        success = result == self.__published_events[event].TB_ERR_SUCCESS
+
+                    if success:
+                        self.__event_storage.event_pack_processing_done()
+                else:
+                    time.sleep(1)
+            except Exception as e:
+                log.error(e)
+                time.sleep(10)
+
