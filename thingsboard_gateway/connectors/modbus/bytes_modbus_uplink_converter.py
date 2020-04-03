@@ -38,17 +38,17 @@ class BytesModbusUplinkConverter(ModbusConverter):
                 byte_order = configuration.get("byteOrder", "LITTLE")
                 endian_order = Endian.Little if byte_order.upper() == "LITTLE" else Endian.Big
                 decoded_data = None
-                if configuration["functionCode"] in [1, 2]:
-                    result = response.bits
-                    result = result if byte_order.upper() == 'LITTLE' else result[::-1]
-                    log.debug(result)
-                    if "bit" in configuration:
-                        decoded_data = result[configuration["bit"]]
-                    else:
-                        decoded_data = result[0]
-                elif configuration["functionCode"] in [3, 4]:
-                    decoder = None
-                    if not isinstance(response, ModbusIOException):
+                if not isinstance(response, ModbusIOException):
+                    if configuration["functionCode"] in [1, 2]:
+                        result = response.bits
+                        result = result if byte_order.upper() == 'LITTLE' else result[::-1]
+                        log.debug(result)
+                        if "bit" in configuration:
+                            decoded_data = result[configuration["bit"]]
+                        else:
+                            decoded_data = result[0]
+                    elif configuration["functionCode"] in [3, 4]:
+                        decoder = None
                         registers = response.registers
                         log.debug("Tag: %s Config: %s registers: %s", tag, str(configuration), str(registers))
                         try:
@@ -58,9 +58,13 @@ class BytesModbusUplinkConverter(ModbusConverter):
                             decoder = BinaryPayloadDecoder.fromRegisters(registers, endian=endian_order)
                         assert decoder is not None
                         decoded_data = self.__decode_from_registers(decoder, configuration)
-                    else:
-                        log.exception(response)
-                        decoded_data = None
+                        if configuration.get("divider"):
+                            decoded_data = float(decoded_data) / float(configuration["divider"])
+                        if configuration.get("multiplier"):
+                            decoded_data = decoded_data * configuration["multiplier"]
+                else:
+                    log.exception(response)
+                    decoded_data = None
                 log.debug("datatype: %s \t key: %s \t value: %s", self.__datatypes[config_data], tag, str(decoded_data))
                 self.__result[self.__datatypes[config_data]].append({tag: decoded_data})
         log.debug(self.__result)
@@ -91,17 +95,17 @@ class BytesModbusUplinkConverter(ModbusConverter):
 
         decoded = None
         if lower_type in ['int', 'long', 'integer']:
-            type_ = str(registers_count * 8) + "int"
+            type_ = str(registers_count * 16) + "int"
             assert decoder_functions.get(type_) is not None
             decoded = decoder_functions[type_]()
 
         elif lower_type in ["double", "float"]:
-            type_ = str(registers_count * 8) + "float"
+            type_ = str(registers_count * 16) + "float"
             assert decoder_functions.get(type_) is not None
             decoded = decoder_functions[type_]()
 
         elif lower_type == 'uint':
-            type_ = str(registers_count * 8) + "uint"
+            type_ = str(registers_count * 16) + "uint"
             assert decoder_functions.get(type_) is not None
             decoded = decoder_functions[type_]()
 

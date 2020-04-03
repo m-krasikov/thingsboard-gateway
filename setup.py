@@ -19,9 +19,10 @@ setup(
     packages=['thingsboard_gateway', 'thingsboard_gateway.gateway', 'thingsboard_gateway.storage',
               'thingsboard_gateway.tb_client', 'thingsboard_gateway.connectors', 'thingsboard_gateway.connectors.ble',
               'thingsboard_gateway.connectors.mqtt', 'thingsboard_gateway.connectors.opcua', 'thingsboard_gateway.connectors.request',
-              'thingsboard_gateway.connectors.modbus', 'thingsboard_gateway.tb_utility', 'thingsboard_gateway.extensions',
+              'thingsboard_gateway.connectors.modbus', 'thingsboard_gateway.connectors.can', 'thingsboard_gateway.tb_utility', 'thingsboard_gateway.extensions',
               'thingsboard_gateway.extensions.mqtt', 'thingsboard_gateway.extensions.modbus', 'thingsboard_gateway.extensions.opcua',
-              'thingsboard_gateway.extensions.ble', 'thingsboard_gateway.extensions.serial', 'thingsboard_gateway.extensions.request'
+              'thingsboard_gateway.extensions.ble', 'thingsboard_gateway.extensions.serial', 'thingsboard_gateway.extensions.request',
+              'thingsboard_gateway.extensions.can'
               ],
     install_requires=[
         'cffi',
@@ -37,10 +38,12 @@ setup(
         'pytz',
         'PyYAML',
         'simplejson',
+        'orjson>=2.6.3',
         'pyrsistent',
-        'requests'
+        'requests',
+        'python-can'
     ],
-    download_url='https://github.com/thingsboard/thingsboard-gateway/archive/2.2.3.1.tar.gz',
+    download_url='https://github.com/thingsboard/thingsboard-gateway/archive/2.2.4.1.tar.gz',
     entry_points={
         'console_scripts': [
             'thingsboard-gateway = thingsboard_gateway.tb_gateway:daemon'

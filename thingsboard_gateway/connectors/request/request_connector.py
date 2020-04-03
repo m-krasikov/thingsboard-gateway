@@ -209,10 +209,23 @@ class RequestConnector(Connector, Thread):
         try:
             if not self.__convert_queue.empty():
                 url, converter, data = self.__convert_queue.get()
-                converted_data = converter.convert(url, data)
-                self.__gateway.send_to_storage(self.get_name(), converted_data)
-                self.statistics["MessagesSent"] = self.statistics["MessagesSent"] + 1
-                log.debug(converted_data)
+                data_to_send = {}
+                if isinstance(data, list):
+                    for data_item in data:
+                        converted_data = converter.convert(url, data_item)
+                        if data_to_send.get(converted_data["deviceName"]) is None:
+                            data_to_send[converted_data["deviceName"]] = converted_data
+                        else:
+                            if converted_data["telemetry"]:
+                                data_to_send[converted_data["deviceName"]]["telemetry"].append(converted_data["telemetry"][0])
+                            if converted_data["attributes"]:
+                                data_to_send[converted_data["deviceName"]]["attributes"].append(converted_data["attributes"][0])
+                else:
+                    data_to_send = converter.convert(url, data)
+                for device in data_to_send:
+                    self.__gateway.send_to_storage(self.get_name(), data_to_send[device])
+                    self.statistics["MessagesSent"] = self.statistics["MessagesSent"] + 1
+                log.debug(data_to_send)
             else:
                 sleep(.01)
         except Exception as e:
